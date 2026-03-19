@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CosmoBot — Space Exploration AI</title>
+  <meta name="description" content="Ask anything about space exploration, astronomy, and the cosmos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="starfield"></canvas>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">🚀</span>
+          <span class="brand-name">CosmoBot</span>
+        </div>
+        <span class="brand-tagline">Space Exploration AI</span>
+      </div>
+    </header>
+
+    <!-- Chat container -->
+    <main class="chat-container" id="chatContainer">
+
+      <!-- Welcome / empty state -->
+      <section class="welcome-state" id="welcomeState">
+        <div class="welcome-graphic">
+          <span class="planet-emoji">🪐</span>
+          <span class="star-emoji s1">✦</span>
+          <span class="star-emoji s2">✦</span>
+          <span class="star-emoji s3">✦</span>
+        </div>
+        <h1 class="welcome-title">Explore the Universe</h1>
+        <p class="welcome-sub">Ask me anything about space missions, black holes, exoplanets, rocket science, or the history of space exploration.</p>
+        <div class="suggestions" id="suggestions">
+          <button class="chip" data-q="How does a black hole form?">How does a black hole form?</button>
+          <button class="chip" data-q="What is the Artemis program?">What is the Artemis program?</button>
+          <button class="chip" data-q="Can humans live on Mars?">Can humans live on Mars?</button>
+          <button class="chip" data-q="How far away is Proxima Centauri?">How far away is Proxima Centauri?</button>
+          <button class="chip" data-q="What happened to the Voyager probes?">What happened to the Voyager probes?</button>
+          <button class="chip" data-q="Explain orbital mechanics simply">Explain orbital mechanics simply</button>
+        </div>
+      </section>
+
+      <!-- Messages list -->
+      <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+    </main>
+
+    <!-- Input area -->
+    <footer class="input-area">
+      <form class="input-form" id="inputForm" autocomplete="off">
+        <div class="input-wrap">
+          <textarea
+            id="userInput"
+            class="input-field"
+            placeholder="Ask about space..."
+            rows="1"
+            maxlength="1000"
+            aria-label="Your question"
+          ></textarea>
+          <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="disclaimer">CosmoBot may make mistakes. Verify important facts with NASA, ESA, or peer-reviewed sources.</p>
+      </form>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
