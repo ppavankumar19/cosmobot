@@ -1,0 +1,16 @@
+{
+  "name": "cosmobot",
+  "version": "1.0.0",
+  "description": "Space exploration chatbot powered by Groq + LLaMA 3.3",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
