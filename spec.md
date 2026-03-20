@@ -1,164 +1,126 @@
-# CosmoBot — Technical Specification
+# CosmoBot Technical Specification
 
-## Architecture Overview
+## Runtime Architecture
 
-```
-Browser (SPA)
-    │
-    ├── GET /           → public/index.html (Vercel static)
-    ├── GET /styles.css → public/styles.css
-    ├── GET /app.js     → public/app.js
-    │
-    └── POST /api/chat  → api/chat.js (Vercel serverless)
-                              │
-                              └── POST https://api.groq.com/openai/v1/chat/completions
-```
+### Browser
 
----
+- Serves `public/index.html` as the active client entry
+- Loads `marked` and `DOMPurify` from jsDelivr CDNs
+- Loads Three.js through an import map pointing to `/three.module.min.js`
+- Renders the full UI, background shader, splash animation, and chat logic inline from `index.html`
 
-## API Endpoint
+### Server
 
-### `POST /api/chat`
+- `server.js` runs an Express server on port `8555`
+- Serves `public/` as static assets
+- Proxies `POST /api/chat` to the same handler exported by `api/chat.js`
 
-**Request**
-```json
-{
-  "messages": [
-    { "role": "user",      "content": "How does a black hole form?" },
-    { "role": "assistant", "content": "Great question! ..." },
-    { "role": "user",      "content": "What happens at the singularity?" }
-  ]
-}
-```
+### API
 
-**Response — success**
-```json
-{
-  "message": "At the singularity, our current physics breaks down..."
-}
-```
+- `api/chat.js` validates request shape and requires `GROQ_API_KEY`
+- Sends requests to `https://api.groq.com/openai/v1/chat/completions`
+- Uses model `llama-3.3-70b-versatile`
+- Returns `{ message }` on success and `{ error }` on failure
 
-**Response — error**
-```json
-{
-  "error": "Human-readable error message"
-}
-```
+## Active Frontend Entry
 
-**Status codes**
-| Code | Meaning |
-|------|---------|
-| 200  | Success |
-| 400  | Missing or malformed `messages` array |
-| 405  | Non-POST request |
-| 500  | Missing API key, Groq error, or unhandled exception |
+The current live client is `public/index.html`.
 
----
+It contains:
 
-## Groq API Configuration
+- Design tokens and all active CSS
+- Splash/loading overlay
+- Color Bends shader background
+- Landing/chat layout and UI state transitions
+- Markdown rendering helpers
+- Browser speech synthesis integration
+- Chat submission, error handling, copy interactions, and scroll behavior
 
-| Parameter   | Value |
-|-------------|-------|
-| Model       | `llama-3.3-70b-versatile` |
-| Temperature | `0.72` |
-| Max tokens  | `1024` |
-| Stream      | `false` |
-| Context     | Last 20 messages + system prompt |
+`public/styles.css` and `public/app.js` remain in the repo as legacy split-file artifacts, but the present UI is not driven by them.
 
-### System Prompt (summary)
+## Frontend Features
 
-CosmoBot is instructed to:
-- Act as an enthusiastic, accurate space exploration expert
-- Cover: missions, astrophysics, planetary science, rocket science, cosmology, space history
-- Use analogies for complex concepts; cite real data and dates
-- Respond in plain text, under 300 words unless depth is warranted
-- Redirect off-topic questions back to space
+### Splash / Loading
 
----
+- Fullscreen splash overlay shown before the app shell fades in
+- Animated shuffle-style title build for `COSMOBOT`
+- Progress bar that fills during the splash duration
+- Click-to-skip behavior
 
-## Frontend State Machine
+### Background
 
-```
-            ┌──────────┐
-   start ──▶│ welcome  │◀─── (on page load)
-            └────┬─────┘
-                 │ user sends first message
-                 ▼
-            ┌──────────┐
-            │ loading  │ ← typing indicator shown, input disabled
-            └────┬─────┘
-           ╱            ╲
-          ▼              ▼
-    ┌──────────┐    ┌──────────┐
-    │ messages │    │  error   │
-    └────┬─────┘    └────┬─────┘
-         │               │
-         └───────────────┘
-                 │ user sends next message
-                 ▼
-            ┌──────────┐
-            │ loading  │
-            └──────────┘
-```
+- Fullscreen Color Bends shader implemented with Three.js
+- Pointer-responsive parallax/mouse influence
+- Configurable color list, scale, frequency, warp strength, and noise
 
----
+### Chat UI
 
-## Component Breakdown
+- Welcome view with suggestion chips and randomized space fact
+- Chat view with message log and fixed input dock
+- User and assistant message bubbles with timestamps
+- Typing/loading indicator and inline error bubble
+- Copy button for assistant messages
+- Listen button for assistant messages using browser speech synthesis
+- Scroll-to-bottom floating action button
+- Character count with warning thresholds
 
-### `index.html`
-- App shell with fixed header, scrollable `<main>`, fixed `<footer>`
-- Welcome section: planet emoji, title, subtitle, 6 suggestion chips
-- Messages `<div role="log">` with `aria-live="polite"` for screen readers
-- `<textarea>` with character limit (1000), `<button>` send, disclaimer
+## Request / Response Behavior
 
-### `styles.css`
-- CSS custom properties (design tokens) for the entire color system
-- Dark space palette: `#050a13` background, blue-tinted neutrals
-- `Space Grotesk` for headings, `Inter` for body text
-- Animations: `bob` (rocket), `spin-slow` (planet), `twinkle` (stars), `bounce-dot` (typing), `slide-in` (messages)
-- Mobile breakpoint at 600px
+### Request Validation
 
-### `app.js`
-- **Starfield:** Canvas 2D, 200 stars, `requestAnimationFrame`, alpha tweening
-- **State:** `messages[]` array (role/content pairs), `isLoading` boolean
-- **Auto-resize:** `input` event → set `height: auto` then `scrollHeight`
-- **Submit:** validate text → push to messages → append user bubble → show typing → fetch `/api/chat` → remove typing → append bot bubble or error
-- **XSS prevention:** `escapeHtml()` escapes `&`, `<`, `>`, `"` before inserting into DOM
+- Non-`POST` requests return `405`
+- Missing or invalid `messages` arrays return `400`
+- Missing `GROQ_API_KEY` returns `500`
 
-### `api/chat.js`
-- Vercel Edge-compatible serverless function (ES module)
-- Validates method (POST only) and body shape
-- Reads `GROQ_API_KEY` from `process.env`
-- Prepends system prompt to messages array
-- Forwards to Groq, passes through errors with status codes
-- Returns `{ message: string }` on success
+### Groq Call
 
----
+- Sends a server-owned system prompt plus `messages.slice(-20)`
+- Uses:
+  - `temperature: 0.72`
+  - `max_tokens: 1024`
+  - `stream: false`
 
-## Security
+### Error Handling
 
-| Concern | Mitigation |
-|---------|-----------|
-| XSS | All user/bot text escaped via `escapeHtml()` before DOM insertion |
-| API key exposure | Key stored server-side only in `process.env`; never sent to browser |
-| Prompt injection | System prompt is prepended server-side; client cannot override it |
-| Request flooding | Groq rate limiting + `isLoading` flag prevents concurrent client requests |
-| Input length | `maxlength="1000"` on textarea + server truncates to 20 messages |
+- Upstream Groq API errors are forwarded with the upstream status code when possible
+- Unexpected handler failures return `500`
+- Frontend network or API failures render inline error UI instead of breaking the session
 
----
+## Environment
 
-## Environment Variables
+Required:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GROQ_API_KEY` | Yes | Groq API key from console.groq.com |
+- `GROQ_API_KEY`
 
----
+Not checked into the repo:
 
-## Deployment Checklist
+- `.env.example`
 
-- [ ] `GROQ_API_KEY` set in Vercel → Settings → Environment Variables
-- [ ] `vercel.json` routes `/api/*` to serverless functions
-- [ ] `public/` directory serves static files from root
-- [ ] Node.js 18+ runtime selected (default on Vercel)
-- [ ] Test on mobile viewport before sharing link
+For local development, the key must be provided via a local `.env` or environment export before running `npm run local`.
+
+## Scripts
+
+- `postinstall`
+  - Copies `three.module.min.js` into `public/three.module.min.js` and `three.core.min.js` into `public/three.core.js`
+- `local`
+  - Runs `node server.js`
+- `dev`
+  - Runs `vercel dev`
+- `deploy`
+  - Runs `vercel --prod`
+
+## Deployment Notes
+
+- `vercel.json` rewrites `/api/*` to `/api/*`
+- Static assets are served from `public/`
+- The active frontend assumes the Three.js bundle exists in `public/`, so the `postinstall` step matters
+
+## Verification Checklist
+
+- [ ] `npm install` populates the local Three.js bundles in `public/`
+- [ ] `npm run local` serves the app on `http://localhost:8555`
+- [ ] Splash screen appears and dismisses correctly
+- [ ] Color Bends background renders and responds to pointer movement
+- [ ] Markdown responses render correctly
+- [ ] Copy and Listen actions work in supported browsers
+- [ ] Chat requests succeed when `GROQ_API_KEY` is configured
