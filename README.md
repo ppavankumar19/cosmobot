@@ -3,6 +3,7 @@
 Single-page space exploration chatbot built with vanilla HTML/CSS/JS, a local Three.js background shader, and a Groq-backed serverless/chat proxy.
 
 Live site: https://cosmobot.19062002.xyz/
+Entire.io project: https://entire.io/gh/ppavankumar19/cosmobot/checkpoints/main
 
 ## Current Stack
 
