@@ -62,10 +62,11 @@ Notes:
 npm install
 ```
 
-2. Create a local `.env` file with your Groq key:
+2. Create a local `.env` file with your API keys:
 
 ```bash
 GROQ_API_KEY=your_key_here
+SARVAM_API_KEY=your_key_here
 ```
 
 3. Start the local server:
@@ -107,6 +108,8 @@ It returns:
 ```
 
 The handler sends the system prompt plus the last 20 messages to Groq using `llama-3.3-70b-versatile`.
+
+`POST /api/tts` proxies Sarvam text-to-speech server-side using `SARVAM_API_KEY`, so the browser never sees the secret key.
 
 ## Important Implementation Notes
 
