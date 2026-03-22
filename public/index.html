@@ -1117,6 +1117,7 @@
 
   function returnToLanding() {
     inChat = false;
+    stopSpeaking();
     messages.length = 0;
     messagesEl.innerHTML = '';
     chatView.classList.remove('active');
@@ -1125,7 +1126,6 @@
     landingDock.appendChild(inputForm);
     clearBtn.classList.add('hidden');
     scrollFab.classList.add('hidden');
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
     showFact();
     userInput.focus();
   }
@@ -1164,42 +1164,108 @@
   );
 
   /* ════════════════════════════════════════════════════════════════════════
-     TEXT-TO-AUDIO  ·  Web Speech API
-     ── Sarvam.ai integration point ──────────────────────────────────────
-     When ready, replace the speechSynthesis block with:
-
-     const res = await fetch('https://api.sarvam.ai/text-to-speech', {
-       method:'POST',
-       headers:{'api-subscription-key':'YOUR_KEY','Content-Type':'application/json'},
-       body: JSON.stringify({
-         inputs:[plainText], target_language_code:'en-IN',
-         speaker:'meera', pitch:0, pace:1.0, loudness:1.5,
-         speech_sample_rate:22050, enable_preprocessing:true, model:'bulbul:v1',
-       }),
-     });
-     const { audios } = await res.json();
-     new Audio('data:audio/wav;base64,' + audios[0]).play();
+     TEXT-TO-AUDIO  ·  Sarvam.ai
   ════════════════════════════════════════════════════════════════════════ */
   const I_SPEAK=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
   const I_STOP =`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
   const I_COPY =`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/></svg>`;
   const I_CHECK=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  let activeAudio = null;
+  let activeAudioUrl = null;
+  let activeSpeakBtn = null;
+  let activeSpeakRequest = null;
 
-  function speakText(plain,btn){
-    if(!window.speechSynthesis) return;
-    if(window.speechSynthesis.speaking){
-      window.speechSynthesis.cancel();
-      document.querySelectorAll('.speak-btn.speaking').forEach(b=>{
-        b.classList.remove('speaking'); b.innerHTML=`${I_SPEAK} Listen`;
-      });
+  function resetSpeakButton(btn){
+    if(!btn) return;
+    btn.classList.remove('speaking');
+    btn.innerHTML=`${I_SPEAK} Listen`;
+  }
+
+  function stopSpeaking(){
+    if(activeSpeakRequest){
+      activeSpeakRequest.abort();
+      activeSpeakRequest = null;
+    }
+    if(activeAudio){
+      activeAudio.pause();
+      activeAudio.currentTime = 0;
+      activeAudio.src = '';
+      activeAudio = null;
+    }
+    if(activeAudioUrl){
+      URL.revokeObjectURL(activeAudioUrl);
+      activeAudioUrl = null;
+    }
+    resetSpeakButton(activeSpeakBtn);
+    activeSpeakBtn = null;
+  }
+
+  async function speakText(plain,btn){
+    if(!plain) return;
+    if(activeSpeakBtn===btn&&(activeSpeakRequest||activeAudio)){
+      stopSpeaking();
       return;
     }
-    const utt=new SpeechSynthesisUtterance(plain);
-    utt.rate=.95; utt.pitch=1; utt.lang='en-US';
-    btn.classList.add('speaking'); btn.innerHTML=`${I_STOP} Stop`;
-    const reset=()=>{ btn.classList.remove('speaking'); btn.innerHTML=`${I_SPEAK} Listen`; };
-    utt.onend=reset; utt.onerror=reset;
-    window.speechSynthesis.speak(utt);
+
+    stopSpeaking();
+    activeSpeakBtn = btn;
+    btn.classList.add('speaking');
+    btn.innerHTML=`${I_STOP} Loading`;
+
+    const controller = new AbortController();
+    activeSpeakRequest = controller;
+
+    try{
+      const res = await fetch('/api/tts', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: plain }),
+        signal: controller.signal,
+      });
+
+      if(activeSpeakRequest!==controller) return;
+
+      if(!res.ok){
+        const isJson = (res.headers.get('content-type') || '').includes('application/json');
+        const err = isJson ? await res.json().catch(()=>({})) : {};
+        throw new Error(err.error || `Error ${res.status}`);
+      }
+
+      const audioBlob = await res.blob();
+      if(!audioBlob.size) throw new Error('Empty audio response');
+
+      activeSpeakRequest = null;
+
+      activeAudioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(activeAudioUrl);
+      activeAudio = audio;
+      btn.innerHTML=`${I_STOP} Stop`;
+
+      const reset = ()=>{
+        if(activeAudio===audio) activeAudio = null;
+        if(activeAudioUrl){
+          URL.revokeObjectURL(activeAudioUrl);
+          activeAudioUrl = null;
+        }
+        if(activeSpeakBtn===btn) activeSpeakBtn = null;
+        resetSpeakButton(btn);
+      };
+
+      audio.addEventListener('ended', reset, { once:true });
+      audio.addEventListener('error', ()=>{
+        reset();
+        appendError('Audio playback failed.');
+      }, { once:true });
+
+      await audio.play();
+    } catch(err){
+      if(err.name==='AbortError') return;
+      console.error('TTS playback error:', err);
+      activeSpeakRequest = null;
+      if(activeSpeakBtn===btn) activeSpeakBtn = null;
+      resetSpeakButton(btn);
+      appendError(err.message || 'Text-to-speech failed.');
+    }
   }
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -1210,6 +1276,7 @@
 
   async function submitMsg(){
     const text=userInput.value.trim(); if(!text) return;
+    stopSpeaking();
     enterChat();
     userInput.value=''; userInput.style.height='auto';
     charCountEl.textContent='0 / 1000'; charCountEl.classList.remove('warn','limit');

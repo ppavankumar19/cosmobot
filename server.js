@@ -17,6 +17,11 @@ app.post('/api/chat', async (req, res) => {
   await handler(req, res);
 });
 
+app.post('/api/tts', async (req, res) => {
+  const handler = (await import('./api/tts.js')).default;
+  await handler(req, res);
+});
+
 app.listen(PORT, () => {
   console.log(`CosmoBot running at http://localhost:${PORT}`);
 });
