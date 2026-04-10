@@ -1,0 +1,1 @@
+So, now i want you to analyse the project and modify anything if required, and also the need the process flow and work flwo of the project in .mds so update them and git add them individually and commit them and push them.
