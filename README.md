@@ -5,7 +5,7 @@ Single-page space exploration chatbot built with vanilla HTML/CSS/JS, a local Th
 | | |
 |---|---|
 | **Live site** | <https://cosmobot.19062002.xyz/> |
-| **GitHub** | <https://github.com/ppavankumar19/cosmobot> |
+| **Entire.io** | <https://entire.io/gh/ppavankumar19/cosmobot/checkpoints/main> |
 
 ---
 
