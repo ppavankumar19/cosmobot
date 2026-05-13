@@ -17,7 +17,7 @@
 ### 1. Clone and Install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/ppavankumar19/cosmobot.git
 cd cosmobot
 npm install
 ```
