@@ -120,9 +120,9 @@ These are kept for reference but are not loaded or used by the current UI.
 
 - `<textarea>` for multi-line input
 - Character counter with color thresholds:
-  - 0–300: neutral
-  - 301–900: warning
-  - 901–1000: danger / submit blocked
+  - 0–800: neutral
+  - 801–950: warning (amber)
+  - 951–1000: limit (red)
 - Send on `Enter` (without `Shift`); `Shift+Enter` inserts a newline
 - Input disabled while a response is in flight
 
@@ -247,5 +247,5 @@ Copy `.env.example` to `.env` for local development. For Vercel, set these in th
 - [ ] TTS requests succeed end-to-end when `SARVAM_API_KEY` is configured
 - [ ] Error bubbles appear on API failure without breaking the session
 - [ ] Scroll-to-bottom FAB appears when scrolled up in the message log
-- [ ] Character counter changes color at 301 and 901 characters
+- [ ] Character counter turns amber at 801 characters and red at 951 characters
 - [ ] App is usable on mobile viewport (375 px wide)
