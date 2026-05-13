@@ -210,6 +210,7 @@
       color:var(--text-muted); cursor:pointer;
       display:flex; align-items:center; justify-content:center;
       transition:background .18s, border-color .18s, color .18s, transform .12s; flex-shrink:0;
+      touch-action:manipulation;
     }
     .icon-btn:hover { background:rgba(91,156,246,.14); border-color:var(--border-focus); color:var(--accent); transform:scale(1.08); }
     .icon-btn:active { transform:scale(.96); }
@@ -275,6 +276,7 @@
       border:1px solid var(--chip-border); border-radius:99px;
       padding:7px 16px; cursor:pointer; white-space:nowrap;
       transition:background .18s, border-color .18s, color .18s, transform .12s, box-shadow .18s;
+      touch-action:manipulation;
     }
     .chip:hover {
       background:var(--chip-hover); border-color:var(--accent); color:var(--accent-hover);
@@ -322,6 +324,7 @@
       display:flex; align-items:center; justify-content:center;
       transition:background .18s, transform .12s, box-shadow .18s;
       box-shadow:0 2px 12px rgba(91,156,246,.4);
+      touch-action:manipulation;
     }
     .send-btn:hover  { background:var(--accent-hover); transform:scale(1.07); box-shadow:0 4px 18px rgba(91,156,246,.5); }
     .send-btn:active { transform:scale(.94); }
@@ -415,6 +418,7 @@
       display:flex; align-items:center; gap:4px;
       font-size:.67rem; font-family:var(--font-ui);
       transition:color .15s, background .15s; white-space:nowrap; min-height:28px;
+      touch-action:manipulation;
     }
     .copy-btn:hover,.speak-btn:hover { color:var(--accent); background:rgba(91,156,246,.10); }
     .copy-btn.copied { color:#4ade80; }
@@ -491,6 +495,7 @@
       transition:opacity .2s, transform .2s, background .18s;
       box-shadow:0 4px 16px rgba(0,0,0,.4);
       margin-bottom:-36px;
+      touch-action:manipulation;
     }
     .scroll-fab:hover { background:rgba(91,156,246,.18); transform:translateY(-2px); }
     .scroll-fab.hidden { opacity:0; pointer-events:none; }
@@ -1322,8 +1327,8 @@
           <div class="bubble prose">${renderMD(text)}</div>
           <div class="bubble-footer">
             <span class="msg-time">${time}</span>
-            <button class="speak-btn">${I_SPEAK} Listen</button>
-            <button class="copy-btn">${I_COPY} Copy</button>
+            <button class="speak-btn" title="Listen to this response" aria-label="Listen to this response">${I_SPEAK} Listen</button>
+            <button class="copy-btn" title="Copy response to clipboard" aria-label="Copy response to clipboard">${I_COPY} Copy</button>
           </div>
         </div>`;
       const spk=msg.querySelector('.speak-btn');
